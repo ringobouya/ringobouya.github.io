@@ -409,10 +409,11 @@
       z-index: 4;
       top: 9px;
       right: 9px;
-      left: 9px;
+      left: 86px;
       display: flex;
       align-items: flex-start;
       justify-content: flex-start;
+      flex-wrap: nowrap;
       gap: 6px;
       color: var(--game-star);
       font: 900 .62rem "Courier New", ui-monospace, monospace;
@@ -426,8 +427,6 @@
       padding: 0 7px;
       white-space: nowrap;
     }
-
-    .game-hud #game-score { margin-right: auto; }
 
     .game-hud[hidden] { display: none; }
 
@@ -449,19 +448,24 @@
     .game-exit:focus-visible { outline: 2px solid var(--game-star); outline-offset: 3px; }
     .game-exit:active { transform: translateY(1px); }
 
-    .game-sound-toggle {
-      min-width: 62px;
-      min-height: 42px;
-      border: 2px solid var(--line);
-      padding: 4px 9px;
-      background: var(--panel);
-      color: var(--ink);
+    .game-hud-audio {
+      position: absolute;
+      z-index: 7;
+      top: 9px;
+      left: 9px;
+      min-height: 25px;
+      border: 0;
+      padding: 1px 5px;
+      background: transparent;
+      color: var(--game-glow);
       cursor: pointer;
-      font: 800 .66rem ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font: 900 .62rem "Courier New", ui-monospace, monospace;
       letter-spacing: .06em;
+      text-shadow: 1px 1px 0 #17152b;
     }
 
-    .game-sound-toggle:hover { background: var(--accent); color: var(--accent-ink); }
+    .game-hud-audio:hover, .game-hud-audio:focus-visible { color: var(--game-star); }
+    .game-hud-audio:focus-visible { outline: 2px solid var(--game-star); outline-offset: 2px; }
 
     .game-controls {
       display: flex;
@@ -717,6 +721,7 @@
                 <span>← / → MOVE</span>
                 <button class="game-exit" id="game-exit" type="button" aria-label="Escapeキーまたはこのボタンでゲームを中止して結果を表示">ESC QUIT</button>
               </div>
+              <button class="game-hud-audio" id="game-hud-audio" type="button" aria-label="ゲーム音の状態: 待機中。クリックで再生">♪ READY</button>
               <div class="game-overlay" id="game-overlay">
                 <strong id="game-overlay-title">METEOR CATCHER</strong>
                 <p id="game-overlay-copy">CATCH 10 STARS</p>
@@ -732,11 +737,10 @@
                 <span class="dpad-label" aria-hidden="true">MOVE</span>
                 <button class="dpad-button dpad-right" type="button" data-direction="right" aria-label="右へ移動">▶</button>
               </div>
-              <button class="game-sound-toggle" id="game-sound-toggle" type="button" aria-label="待機BGMを再生">♪ READY</button>
             </div>
             <div class="game-audio-info">
               <p class="game-audio-status" id="game-audio-status" aria-live="polite">AUDIO: READY · CLICK ♪ OR START</p>
-              <p class="game-audio-note">♪ READYでタイトルBGM、START後はプレイBGM・効果音が流れます。♪ OFFで消音。音量にご注意ください。</p>
+              <p class="game-audio-note">CHECK VOLUME BEFORE PLAY</p>
             </div>
             <p class="sr-only" id="game-announcer" aria-live="polite" aria-atomic="true">ゲーム開始前です。スタートボタンを押してください。</p>
           </div>
@@ -783,7 +787,7 @@
       const startButton = document.getElementById("game-start");
       const hud = document.getElementById("game-hud");
       const exitButton = document.getElementById("game-exit");
-      const soundToggle = document.getElementById("game-sound-toggle");
+      const hudAudioToggle = document.getElementById("game-hud-audio");
       const audioStatus = document.getElementById("game-audio-status");
       const feedback = document.getElementById("game-feedback");
       const score = document.getElementById("game-score");
@@ -993,21 +997,22 @@
 
       function updateAudioDisplay() {
         if (audioState.muted) {
-          soundToggle.textContent = "♪ OFF";
-          soundToggle.setAttribute("aria-label", "ゲーム音を再生");
           audioStatus.textContent = "AUDIO: MUTED";
+          hudAudioToggle.textContent = "♪ OFF";
+          hudAudioToggle.setAttribute("aria-label", "ゲーム音はオフです。クリックで再生");
           return;
         }
 
         if (!audioState.context) {
-          soundToggle.textContent = "♪ READY";
-          soundToggle.setAttribute("aria-label", "待機BGMを再生");
           audioStatus.textContent = "AUDIO: READY · CLICK ♪ OR START";
+          hudAudioToggle.textContent = "♪ READY";
+          hudAudioToggle.setAttribute("aria-label", "ゲーム音は待機中です。クリックで再生");
           return;
         }
 
-        soundToggle.textContent = "♪ ON";
-        soundToggle.setAttribute("aria-label", "ゲーム音をミュート");
+        const isPlaying = audioState.activeTrack && audioState.context.state === "running";
+        hudAudioToggle.textContent = isPlaying ? "♪ ON" : "♪ READY";
+        hudAudioToggle.setAttribute("aria-label", isPlaying ? "ゲーム音はオンです。クリックで消音" : "ゲーム音は待機中です。クリックで再生");
         const trackLabels = {
           title: "TITLE BGM",
           opening: "OPENING BGM",
@@ -1378,7 +1383,7 @@
 
       startButton.addEventListener("click", startGame);
       exitButton.addEventListener("click", endGame);
-      soundToggle.addEventListener("click", toggleMusic);
+      hudAudioToggle.addEventListener("click", toggleMusic);
 
       document.addEventListener("keydown", (event) => {
         if (!region.contains(document.activeElement)) return;
