@@ -409,12 +409,12 @@
       z-index: 4;
       top: 9px;
       right: 9px;
-      left: 70px;
+      left: 66px;
       display: flex;
       align-items: flex-start;
       justify-content: flex-start;
       flex-wrap: nowrap;
-      gap: 3px;
+      gap: 2px;
       color: var(--game-star);
       font: 900 .62rem "Courier New", ui-monospace, monospace;
       text-shadow: 2px 2px 0 #17152b;
@@ -425,18 +425,18 @@
       display: inline-flex;
       flex: 0 0 auto;
       align-items: center;
-      padding: 0 4px;
+      padding: 0 3px;
       white-space: nowrap;
     }
 
     .game-hud[hidden] { display: none; }
 
     .game-exit {
-      min-width: 42px;
+      min-width: 0;
       min-height: 25px;
       flex: 0 0 auto;
       border: 0;
-      padding: 1px 5px;
+      padding: 1px 3px;
       background: transparent;
       color: var(--game-glow);
       cursor: pointer;
@@ -655,7 +655,6 @@
     @media (max-width: 380px) {
       .game-hud { left: 66px; gap: 2px; }
       .game-hud span { min-height: 23px; padding: 0 3px; font-size: .52rem; }
-      .game-hud span:nth-of-type(3) { display: none; }
       .game-exit { min-width: 0; min-height: 23px; padding: 0 5px; font-size: .56rem; }
       .game-overlay { padding-right: 10px; padding-left: 10px; }
       .game-overlay strong { font-size: clamp(.9rem, 5vw, 1.2rem); }
@@ -721,7 +720,6 @@
               <div class="game-hud" id="game-hud" hidden>
                 <span id="game-score">STARS 0 / 10</span>
                 <span id="game-misses">MISS 0 / 3</span>
-                <span>← / → MOVE</span>
                 <button class="game-exit" id="game-exit" type="button" aria-label="Escapeキーまたはこのボタンでゲームを中止して結果を表示">ESC QUIT</button>
               </div>
               <button class="game-hud-audio" id="game-hud-audio" type="button" aria-label="ゲーム音の状態: 待機中。クリックで再生">♪ READY</button>
