@@ -340,6 +340,21 @@
 
     .game-overlay[hidden] { display: none; }
 
+    .game-countdown {
+      position: absolute;
+      z-index: 6;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      color: var(--game-glow);
+      font: 900 .9rem "Courier New", ui-monospace, monospace;
+      letter-spacing: .18em;
+      text-shadow: 2px 2px 0 #17152b;
+      pointer-events: none;
+    }
+
+    .game-countdown[hidden] { display: none; }
+
     .game-overlay strong {
       font-family: "Courier New", ui-monospace, monospace;
       font-size: clamp(1rem, 2.2vw, 1.45rem);
@@ -431,6 +446,20 @@
 
     .game-exit:hover { background: var(--game-accent); color: var(--game-ground); }
 
+    .game-sound-toggle {
+      min-width: 62px;
+      min-height: 42px;
+      border: 2px solid var(--line);
+      padding: 4px 9px;
+      background: var(--panel);
+      color: var(--ink);
+      cursor: pointer;
+      font: 800 .66rem ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      letter-spacing: .06em;
+    }
+
+    .game-sound-toggle:hover { background: var(--accent); color: var(--accent-ink); }
+
     .game-controls {
       display: flex;
       align-items: center;
@@ -440,6 +469,17 @@
       color: var(--ink);
       font-size: .68rem;
     }
+
+    .game-audio-info { display: grid; gap: 2px; margin-top: 3px; text-align: center; }
+
+    .game-audio-status, .game-audio-note {
+      margin: 0;
+      color: var(--muted);
+      font: 700 .58rem ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      letter-spacing: .035em;
+    }
+
+    .game-audio-note { font-weight: 500; opacity: .9; }
 
     .dpad {
       display: flex;
@@ -679,6 +719,7 @@
                 <p id="game-overlay-copy">CATCH 10 STARS</p>
                 <button class="game-button" id="game-start" type="button" aria-label="ゲーム開始">START</button>
               </div>
+              <div class="game-countdown" id="game-countdown" role="status" aria-live="assertive" aria-atomic="true" hidden></div>
               <div class="game-feedback" id="game-feedback" aria-hidden="true"></div>
               <div class="screen-caption"><span>METEOR CATCHER</span></div>
             </div>
@@ -688,6 +729,11 @@
                 <span class="dpad-label" aria-hidden="true">MOVE</span>
                 <button class="dpad-button dpad-right" type="button" data-direction="right" aria-label="右へ移動">▶</button>
               </div>
+              <button class="game-sound-toggle" id="game-sound-toggle" type="button" aria-label="待機BGMを再生">♪ READY</button>
+            </div>
+            <div class="game-audio-info">
+              <p class="game-audio-status" id="game-audio-status" aria-live="polite">AUDIO: READY · CLICK ♪ OR START</p>
+              <p class="game-audio-note">♪ READYでタイトルBGM、START後はプレイBGM・効果音が流れます。♪ OFFで消音。音量にご注意ください。</p>
             </div>
             <p class="sr-only" id="game-announcer" aria-live="polite" aria-atomic="true">ゲーム開始前です。スタートボタンを押してください。</p>
           </div>
@@ -730,9 +776,12 @@
       const overlay = document.getElementById("game-overlay");
       const overlayTitle = document.getElementById("game-overlay-title");
       const overlayCopy = document.getElementById("game-overlay-copy");
+      const countdown = document.getElementById("game-countdown");
       const startButton = document.getElementById("game-start");
       const hud = document.getElementById("game-hud");
       const exitButton = document.getElementById("game-exit");
+      const soundToggle = document.getElementById("game-sound-toggle");
+      const audioStatus = document.getElementById("game-audio-status");
       const feedback = document.getElementById("game-feedback");
       const score = document.getElementById("game-score");
       const missCounter = document.getElementById("game-misses");
@@ -743,6 +792,17 @@
       const MOVE_STEP = 24;
       const MAX_MISSES = 3;
       const MAX_DIFFICULTY_LEVEL = 8;
+      const audioState = { context: null, musicGain: null, sfxGain: null, timer: null, step: 0, muted: false, track: null, activeTrack: null };
+      const melody = [523.25, 659.25, 783.99, 659.25, 587.33, 659.25, 880, 659.25, 523.25, 659.25, 783.99, 987.77, 880, 783.99, 659.25, 587.33];
+      const bassline = [130.81, 130.81, 196, 196, 110, 110, 164.81, 164.81, 87.31, 87.31, 130.81, 130.81, 98, 98, 146.83, 146.83];
+      const musicTracks = {
+        title: { notes: [523.25, 0, 659.25, 0, 783.99, 0, 659.25, 0, 587.33, 0, 659.25, 0, 783.99, 0, 523.25, 0], interval: 320, duration: 0.19, volume: 0.075, waveform: "square" },
+        opening: { notes: [392, 523.25, 659.25, 783.99, 659.25, 523.25, 783.99, 988], interval: 180, duration: 0.14, volume: 0.075, waveform: "square" },
+        game: { notes: melody, bassline, interval: 250, duration: 0.19, volume: 0.13, bassVolume: 0.16, waveform: "square" },
+        ending: { notes: [523.25, 392, 587.33, 440, 523.25, 392, 349.23, 293.66], interval: 390, duration: 0.29, volume: 0.075, waveform: "triangle" },
+        clear: { notes: [659.25, 783.99, 987.77, 783.99, 880, 987.77, 1318.51, 1174.66], interval: 300, duration: 0.22, volume: 0.085, waveform: "square" },
+        over: { notes: [440, 349.23, 293.66, 261.63, 293.66, 220, 196, 220], interval: 420, duration: 0.34, volume: 0.075, waveform: "triangle" }
+      };
       const directions = {
         ArrowLeft: "left", a: "left", A: "left",
         ArrowRight: "right", d: "right", D: "right"
@@ -751,6 +811,7 @@
       let heldDirection = null;
       let moveTimer = null;
       let fallTimer = null;
+      let countdownTimer = null;
       let feedbackTimer = null;
       const landscapeTiles = [-1, 0, 1].map((tile) => {
         if (tile === 0) return landscape;
@@ -769,6 +830,260 @@
         const element = document.createElementNS("http://www.w3.org/2000/svg", name);
         Object.entries(attributes).forEach(([key, value]) => element.setAttribute(key, value));
         return element;
+      }
+
+      function setMusicGain(value) {
+        if (!audioState.musicGain || !audioState.context) return;
+        const now = audioState.context.currentTime;
+        audioState.musicGain.gain.cancelScheduledValues(now);
+        audioState.musicGain.gain.setTargetAtTime(value, now, 0.035);
+      }
+
+      function setSfxGain(value) {
+        if (!audioState.sfxGain || !audioState.context) return;
+        const now = audioState.context.currentTime;
+        audioState.sfxGain.gain.cancelScheduledValues(now);
+        audioState.sfxGain.gain.setTargetAtTime(value, now, 0.025);
+      }
+
+      function playTone(frequency, startTime, duration, type, volume, output = audioState.musicGain) {
+        const oscillator = audioState.context.createOscillator();
+        const envelope = audioState.context.createGain();
+        oscillator.type = type;
+        oscillator.frequency.setValueAtTime(frequency, startTime);
+        envelope.gain.setValueAtTime(0.0001, startTime);
+        envelope.gain.exponentialRampToValueAtTime(volume, startTime + 0.015);
+        envelope.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
+        oscillator.connect(envelope);
+        envelope.connect(output);
+        oscillator.start(startTime);
+        oscillator.stop(startTime + duration + 0.02);
+        oscillator.addEventListener("ended", () => {
+          oscillator.disconnect();
+          envelope.disconnect();
+        }, { once: true });
+      }
+
+      function playExplosion() {
+        const explode = () => {
+          if (audioState.muted || audioState.context.state !== "running") return;
+          const context = audioState.context;
+          const now = context.currentTime;
+          const length = Math.floor(context.sampleRate * 0.32);
+          const buffer = context.createBuffer(1, length, context.sampleRate);
+          const samples = buffer.getChannelData(0);
+          for (let index = 0; index < length; index += 1) {
+            const fade = 1 - index / length;
+            samples[index] = (Math.random() * 2 - 1) * fade * fade;
+          }
+
+          const noise = context.createBufferSource();
+          const filter = context.createBiquadFilter();
+          const noiseEnvelope = context.createGain();
+          noise.buffer = buffer;
+          filter.type = "lowpass";
+          filter.frequency.setValueAtTime(1500, now);
+          filter.frequency.exponentialRampToValueAtTime(150, now + 0.26);
+          noiseEnvelope.gain.setValueAtTime(0.0001, now);
+          noiseEnvelope.gain.exponentialRampToValueAtTime(0.42, now + 0.012);
+          noiseEnvelope.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
+          noise.connect(filter);
+          filter.connect(noiseEnvelope);
+          noiseEnvelope.connect(audioState.sfxGain);
+          noise.start(now);
+          noise.stop(now + 0.32);
+          noise.addEventListener("ended", () => {
+            noise.disconnect();
+            filter.disconnect();
+            noiseEnvelope.disconnect();
+          }, { once: true });
+
+          const boom = context.createOscillator();
+          const boomEnvelope = context.createGain();
+          boom.type = "sine";
+          boom.frequency.setValueAtTime(105, now);
+          boom.frequency.exponentialRampToValueAtTime(42, now + 0.24);
+          boomEnvelope.gain.setValueAtTime(0.0001, now);
+          boomEnvelope.gain.exponentialRampToValueAtTime(0.52, now + 0.015);
+          boomEnvelope.gain.exponentialRampToValueAtTime(0.0001, now + 0.27);
+          boom.connect(boomEnvelope);
+          boomEnvelope.connect(audioState.sfxGain);
+          boom.start(now);
+          boom.stop(now + 0.29);
+          boom.addEventListener("ended", () => {
+            boom.disconnect();
+            boomEnvelope.disconnect();
+          }, { once: true });
+        };
+
+        if (!audioState.muted && audioState.context && audioState.sfxGain) {
+          if (audioState.context.state === "running") explode();
+          else audioState.context.resume().then(explode).catch(() => {});
+        }
+      }
+
+      function playSoundEffect(name) {
+        if (audioState.muted || !audioState.context || !audioState.sfxGain) return;
+        if (name === "miss") {
+          playExplosion();
+          return;
+        }
+        const effects = {
+          button: [{ frequency: 880, duration: 0.045, volume: 0.055 }],
+          move: [{ frequency: 659.25, duration: 0.055, volume: 0.045 }],
+          start: [
+            { frequency: 392, duration: 0.09, volume: 0.075 },
+            { frequency: 523.25, delay: 0.085, duration: 0.09, volume: 0.075 },
+            { frequency: 783.99, delay: 0.17, duration: 0.16, volume: 0.085 }
+          ],
+          catch: [
+            { frequency: 783.99, duration: 0.075, volume: 0.09 },
+            { frequency: 1046.5, delay: 0.055, duration: 0.085, volume: 0.09 },
+            { frequency: 1567.98, delay: 0.11, duration: 0.12, volume: 0.085 }
+          ],
+          end: [
+            { frequency: 523.25, duration: 0.09, volume: 0.07 },
+            { frequency: 392, delay: 0.085, duration: 0.11, volume: 0.07 },
+            { frequency: 261.63, delay: 0.17, duration: 0.17, volume: 0.07 }
+          ],
+          clear: [
+            { frequency: 659.25, duration: 0.1, volume: 0.08 },
+            { frequency: 783.99, delay: 0.09, duration: 0.1, volume: 0.08 },
+            { frequency: 987.77, delay: 0.18, duration: 0.1, volume: 0.08 },
+            { frequency: 1318.51, delay: 0.27, duration: 0.34, volume: 0.09 }
+          ],
+          over: [
+            { frequency: 440, duration: 0.14, volume: 0.075 },
+            { frequency: 349.23, delay: 0.12, duration: 0.14, volume: 0.075 },
+            { frequency: 293.66, delay: 0.24, duration: 0.25, volume: 0.075 }
+          ]
+        };
+        const notes = effects[name];
+        if (!notes) return;
+        const schedule = () => {
+          if (audioState.muted || audioState.context.state !== "running") return;
+          const now = audioState.context.currentTime;
+          notes.forEach((note) => playTone(
+            note.frequency,
+            now + (note.delay || 0),
+            note.duration,
+            "square",
+            note.volume,
+            audioState.sfxGain
+          ));
+        };
+        if (audioState.context.state === "running") schedule();
+        else audioState.context.resume().then(schedule).catch(() => {});
+      }
+
+      function playMusicStep() {
+        if (!audioState.context || audioState.context.state !== "running" || audioState.muted) return;
+        const track = musicTracks[audioState.activeTrack];
+        if (!track) return;
+        const now = audioState.context.currentTime;
+        const note = audioState.step;
+        const frequency = track.notes[note];
+        if (frequency > 0) playTone(frequency, now, track.duration, track.waveform, track.volume);
+        if (track.bassline && note % 4 === 0) playTone(track.bassline[note], now, 0.72, "triangle", track.bassVolume);
+        audioState.step = (note + 1) % track.notes.length;
+      }
+
+      function updateAudioDisplay() {
+        if (audioState.muted) {
+          soundToggle.textContent = "♪ OFF";
+          soundToggle.setAttribute("aria-label", "ゲーム音を再生");
+          audioStatus.textContent = "AUDIO: MUTED";
+          return;
+        }
+
+        if (!audioState.context) {
+          soundToggle.textContent = "♪ READY";
+          soundToggle.setAttribute("aria-label", "待機BGMを再生");
+          audioStatus.textContent = "AUDIO: READY · CLICK ♪ OR START";
+          return;
+        }
+
+        soundToggle.textContent = "♪ ON";
+        soundToggle.setAttribute("aria-label", "ゲーム音をミュート");
+        const trackLabels = {
+          title: "TITLE BGM",
+          opening: "OPENING BGM",
+          game: "GAME BGM",
+          ending: "END BGM",
+          clear: "CLEAR BGM",
+          over: "GAME OVER BGM"
+        };
+        audioStatus.textContent = audioState.track
+          ? `AUDIO: ${trackLabels[audioState.track]} + SFX`
+          : "AUDIO: READY · CLICK START";
+      }
+
+      function startMusic(trackName) {
+        if (trackName) audioState.track = trackName;
+        const track = musicTracks[audioState.track];
+        if (!track) return;
+        updateAudioDisplay();
+        if (audioState.muted) return;
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextClass) {
+          audioStatus.textContent = "AUDIO: NOT SUPPORTED";
+          return;
+        }
+        try {
+          if (!audioState.context) {
+            audioState.context = new AudioContextClass();
+            audioState.musicGain = audioState.context.createGain();
+            audioState.sfxGain = audioState.context.createGain();
+            audioState.musicGain.gain.value = 0;
+            audioState.sfxGain.gain.value = 0.45;
+            audioState.musicGain.connect(audioState.context.destination);
+            audioState.sfxGain.connect(audioState.context.destination);
+          }
+          if (audioState.activeTrack === audioState.track && audioState.timer !== null) return;
+          if (audioState.timer !== null) window.clearInterval(audioState.timer);
+          audioState.timer = null;
+          const requestedTrack = audioState.track;
+          audioState.context.resume().then(() => {
+            if (audioState.track !== requestedTrack || audioState.muted) return;
+            audioState.activeTrack = requestedTrack;
+            audioState.step = 0;
+            setMusicGain(0.32);
+            setSfxGain(0.45);
+            playMusicStep();
+            audioState.timer = window.setInterval(playMusicStep, track.interval);
+            updateAudioDisplay();
+          }).catch(() => {
+            audioStatus.textContent = "AUDIO: CLICK START TO ENABLE";
+          });
+        } catch (_error) {
+          // 音声を利用できない環境でもゲーム本体は遊べます。
+        }
+      }
+
+      function stopMusic() {
+        if (audioState.timer !== null) window.clearInterval(audioState.timer);
+        audioState.timer = null;
+        audioState.activeTrack = null;
+        setMusicGain(0);
+      }
+
+      function toggleMusic() {
+        if (!audioState.muted && !audioState.context) {
+          startMusic("title");
+          playSoundEffect("button");
+          return;
+        }
+        audioState.muted = !audioState.muted;
+        if (audioState.muted) {
+          stopMusic();
+          setSfxGain(0);
+        } else if (audioState.track) {
+          startMusic(audioState.track);
+          playSoundEffect("button");
+        } else {
+          playSoundEffect("button");
+        }
+        updateAudioDisplay();
       }
 
       function drawWorld() {
@@ -857,17 +1172,15 @@
         }, 700);
       }
 
-      function startGame() {
-        stopMoving();
-        if (fallTimer !== null) window.clearInterval(fallTimer);
+      function beginGame() {
+        if (state.mode !== "countdown") return;
+        countdownTimer = null;
+        countdown.hidden = true;
         state.mode = "playing";
-        state.count = 0;
-        state.misses = 0;
+        startMusic("game");
         state.x = WORLD_CENTER_X;
         state.y = 276;
         spawnStar();
-        startButton.setAttribute("aria-label", "ゲーム開始");
-        overlay.hidden = true;
         hud.hidden = false;
         announceScore();
         drawWorld();
@@ -875,8 +1188,48 @@
         screen.focus();
       }
 
+      function cancelCountdown() {
+        if (state.mode !== "countdown") return;
+        if (countdownTimer !== null) window.clearTimeout(countdownTimer);
+        countdownTimer = null;
+        countdown.hidden = true;
+        hud.hidden = true;
+        state.mode = "idle";
+        startMusic("title");
+        overlay.hidden = false;
+        announcer.textContent = "カウントダウンをキャンセルしました。スタートボタンを押すとゲームを開始します。";
+        drawWorld();
+        startButton.focus();
+      }
+
+      function startGame() {
+        if (state.mode === "countdown" || state.mode === "playing") return;
+        stopMoving();
+        if (fallTimer !== null) window.clearInterval(fallTimer);
+        if (countdownTimer !== null) window.clearTimeout(countdownTimer);
+        state.mode = "countdown";
+        state.count = 0;
+        state.misses = 0;
+        state.x = WORLD_CENTER_X;
+        state.y = 276;
+        state.starX = WORLD_CENTER_X;
+        state.starY = 24;
+        overlay.hidden = true;
+        hud.hidden = true;
+        countdown.hidden = false;
+        startMusic("opening");
+        playSoundEffect("start");
+        drawWorld();
+        screen.focus();
+
+        countdown.textContent = "READY...";
+        announcer.textContent = "ゲームを開始します。";
+        countdownTimer = window.setTimeout(beginGame, 1000);
+      }
+
       function endGame() {
         if (state.mode !== "playing") return;
+        playSoundEffect("end");
         stopMoving();
         window.clearTimeout(feedbackTimer);
         screen.classList.remove("is-catching", "is-missing");
@@ -884,6 +1237,7 @@
         if (fallTimer !== null) window.clearInterval(fallTimer);
         fallTimer = null;
         state.mode = "idle";
+        startMusic("ending");
         hud.hidden = true;
         overlayTitle.textContent = "GAME ENDED";
         overlayCopy.textContent = `${state.count} STARS COLLECTED`;
@@ -897,11 +1251,13 @@
 
       function move(direction) {
         if (state.mode !== "playing") return;
+        const previousX = state.x;
         const lanes = playerLanes();
         const currentLane = nearestLane(state.x, lanes);
         const currentIndex = lanes.indexOf(currentLane);
         if (direction === "left") state.x = lanes[Math.max(0, currentIndex - 1)];
         if (direction === "right") state.x = lanes[Math.min(lanes.length - 1, currentIndex + 1)];
+        if (state.x !== previousX) playSoundEffect("move");
         drawWorld();
       }
 
@@ -955,12 +1311,14 @@
         const overlapsPlayerHorizontally = Math.abs(state.x - state.starX) <= 15;
         if (overlapsPlayerVertically && overlapsPlayerHorizontally) {
           state.count += 1;
+          playSoundEffect(state.count === 10 ? "clear" : "catch");
           showGameFeedback("catch", "+1");
           if (state.count === 10) {
             state.mode = "won";
             stopMoving();
             window.clearInterval(fallTimer);
             fallTimer = null;
+            startMusic("clear");
             hud.hidden = true;
             overlayTitle.textContent = "STAGE CLEAR";
             overlayCopy.textContent = "10 STARS COLLECTED";
@@ -979,9 +1337,11 @@
           showGameFeedback("miss", lostStar ? "MISS −1" : "MISS");
           if (state.misses >= MAX_MISSES) {
             state.mode = "over";
+            playSoundEffect("over");
             stopMoving();
             window.clearInterval(fallTimer);
             fallTimer = null;
+            startMusic("over");
             hud.hidden = true;
             overlayTitle.textContent = "GAME OVER";
             overlayCopy.textContent = `${state.count} STARS · ${state.misses} MISSES`;
@@ -1015,9 +1375,16 @@
 
       startButton.addEventListener("click", startGame);
       exitButton.addEventListener("click", endGame);
+      soundToggle.addEventListener("click", toggleMusic);
 
       document.addEventListener("keydown", (event) => {
-        if (state.mode !== "playing" || !region.contains(document.activeElement)) return;
+        if (!region.contains(document.activeElement)) return;
+        if (state.mode === "countdown" && event.key === "Escape") {
+          event.preventDefault();
+          cancelCountdown();
+          return;
+        }
+        if (state.mode !== "playing") return;
         if (event.key === "Escape") {
           event.preventDefault();
           endGame();
