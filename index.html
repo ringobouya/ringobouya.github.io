@@ -87,7 +87,7 @@
 
     a { color: inherit; }
 
-    button:focus-visible, a:focus-visible {
+    button:focus-visible, a:focus-visible, .game-screen:focus-visible {
       outline: 3px solid var(--accent);
       outline-offset: 4px;
     }
@@ -200,7 +200,8 @@
     .screen {
       position: relative;
       display: grid;
-      min-height: 278px;
+      height: 278px;
+      min-height: 0;
       overflow: hidden;
       align-content: start;
       background: var(--game-sky);
@@ -209,7 +210,7 @@
 
     .screen::after {
       position: absolute;
-      z-index: 1;
+      z-index: 3;
       inset: 0;
       background: repeating-linear-gradient(to bottom, transparent 0 3px, rgba(0, 0, 0, .13) 4px);
       content: "";
@@ -248,7 +249,7 @@
 
     .screen-caption {
       position: absolute;
-      z-index: 2;
+      z-index: 4;
       right: 12px;
       bottom: 10px;
       left: 12px;
@@ -257,6 +258,149 @@
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       font-size: .62rem;
       letter-spacing: .06em;
+    }
+
+    .game-screen { isolation: isolate; }
+
+    .game-backdrop { z-index: 0; }
+
+    .game-screen.is-catching { animation: game-flash .25s steps(2, end); }
+    .game-screen.is-missing { animation: game-shake .22s steps(3, end); }
+
+    @keyframes game-flash {
+      50% { filter: brightness(1.65); }
+    }
+
+    @keyframes game-shake {
+      25% { transform: translateX(-3px); }
+      75% { transform: translateX(3px); }
+    }
+
+    .game-feedback {
+      position: absolute;
+      z-index: 5;
+      bottom: 24%;
+      left: 50%;
+      opacity: 0;
+      color: var(--game-glow);
+      font: 900 .95rem ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      letter-spacing: .08em;
+      pointer-events: none;
+      text-shadow: 2px 2px 0 #17152b;
+      transform: translate(-50%, 8px);
+    }
+
+    .game-feedback.is-visible { animation: feedback-rise .65s steps(4, end) forwards; }
+    .game-feedback.is-miss { color: var(--game-accent); }
+    .game-feedback::before, .game-feedback::after { position: absolute; top: 0; content: "✦"; }
+    .game-feedback::before { right: calc(100% + 8px); }
+    .game-feedback::after { left: calc(100% + 8px); }
+
+    @keyframes feedback-rise {
+      15% { opacity: 1; transform: translate(-50%, 0); }
+      75% { opacity: 1; transform: translate(-50%, -12px); }
+      100% { opacity: 0; transform: translate(-50%, -18px); }
+    }
+
+    .game-overlay {
+      position: absolute;
+      z-index: 4;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 18px;
+      color: var(--game-star);
+      text-align: center;
+      text-shadow: 2px 2px 0 #17152b;
+    }
+
+    .game-overlay[hidden] { display: none; }
+
+    .game-overlay strong {
+      font-family: "Arial Black", "Yu Gothic", sans-serif;
+      font-size: clamp(1.1rem, 2.4vw, 1.6rem);
+      letter-spacing: .12em;
+      -webkit-text-stroke: 1px var(--game-accent);
+    }
+
+    .game-overlay p { margin: 0; font-size: .75rem; }
+
+    .game-button, .dpad-button {
+      border: 1px solid var(--game-star);
+      background: var(--game-ground);
+      color: var(--game-star);
+      cursor: pointer;
+      box-shadow: 2px 2px 0 rgba(0, 0, 0, .45);
+    }
+
+    .game-button { min-height: 38px; padding: 5px 15px; font-weight: 700; }
+
+    .game-button:hover, .dpad-button:hover { background: var(--game-accent); color: var(--game-ground); }
+
+    .game-hud {
+      position: absolute;
+      z-index: 4;
+      top: 8px;
+      right: 10px;
+      left: 10px;
+      display: flex;
+      justify-content: space-between;
+      font: 700 .68rem ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      text-shadow: 1px 1px 0 #17152b;
+    }
+
+    .game-hud[hidden] { display: none; }
+
+    .game-exit {
+      border: 1px solid var(--game-star);
+      padding: 1px 6px;
+      background: var(--game-ground);
+      color: var(--game-star);
+      cursor: pointer;
+      font: inherit;
+      font-size: .58rem;
+      letter-spacing: .05em;
+    }
+
+    .game-exit:hover { background: var(--game-accent); color: var(--game-ground); }
+
+    .game-controls {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 3px 1px;
+      color: var(--ink);
+      font-size: .68rem;
+    }
+
+    .dpad {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .dpad-button { min-width: 42px; min-height: 34px; touch-action: none; }
+
+    .dpad-label {
+      color: var(--muted);
+      font: 700 .58rem ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      letter-spacing: .12em;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
     }
 
     .theme-section {
@@ -375,12 +519,16 @@
       .topbar-note { max-width: 130px; text-align: right; }
       .theme-controls { display: grid; grid-template-columns: 1fr; }
       .theme-button { justify-content: flex-start; }
-      .screen { min-height: 240px; }
+      .screen { height: 240px; }
+      .game-controls { justify-content: center; }
       footer { flex-direction: column; gap: 4px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+      .game-screen.is-catching { animation: none !important; box-shadow: inset 0 0 0 3px var(--game-glow); }
+      .game-screen.is-missing { animation: none !important; box-shadow: inset 0 0 0 3px var(--game-accent); }
+      .game-feedback.is-visible { animation: none !important; opacity: 1; transform: translate(-50%, -8px); }
     }
   </style>
 </head>
@@ -399,14 +547,14 @@
           <p class="lead">まだ何もないので、とりあえず色だけ変えられるようにしました。</p>
         </div>
 
-        <div class="scene-wrap" role="img" aria-label="PC-98風のゲームタイトル画面をイメージしたドット絵の夕景">
+        <div class="scene-wrap" role="group" aria-label="星あつめミニゲーム">
           <div class="window">
             <div class="window-bar">
-              <span class="window-label">RBLAB 98 / MENU</span>
+              <span class="window-label">RBLAB 98 / STAR HUNT</span>
               <span class="window-controls" aria-hidden="true"><i></i><i></i><i></i></span>
             </div>
-            <div class="screen" aria-hidden="true">
-              <svg class="pixel-world" viewBox="0 0 480 320" preserveAspectRatio="xMidYMid slice" focusable="false">
+            <div class="screen game-screen" id="game-screen" role="group" tabindex="0" aria-label="星あつめゲーム。左右の矢印キーまたはA、Dキーで移動します。">
+              <svg class="pixel-world game-backdrop" viewBox="0 0 480 320" preserveAspectRatio="xMidYMid slice" focusable="false" aria-hidden="true">
                 <rect width="480" height="320" fill="var(--game-sky)" />
                 <g fill="var(--game-star)">
                   <rect x="38" y="34" width="4" height="4"/><rect x="92" y="76" width="3" height="3"/>
@@ -419,28 +567,38 @@
                   <rect x="329" y="78" width="68" height="36"/><rect x="337" y="114" width="52" height="8"/>
                   <rect x="345" y="122" width="36" height="8"/>
                 </g>
-                <g fill="var(--game-mountain)">
-                  <path d="M0 205h48v-12h24v-12h16v12h32v20h20v-20h20v-12h12v-12h16v12h16v20h32v20H0z"/>
-                  <path d="M194 221h18v-18h18v-14h16v-12h16v12h20v18h18v14h22v20H194z"/>
+                <g id="game-landscape">
+                  <g fill="var(--game-mountain)">
+                    <path d="M0 205h48v-12h24v-12h16v12h32v20h20v-20h20v-12h12v-12h16v12h16v20h32v20H0z"/>
+                    <path d="M194 221h18v-18h18v-14h16v-12h16v12h20v18h18v14h22v20H194z"/>
+                  </g>
+                  <path d="M0 232h480v88H0z" fill="var(--game-ground)"/>
+                  <path d="M0 284h480M0 300h480" stroke="var(--game-accent)" stroke-width="2" opacity=".55"/>
+                  <path d="M32 265h18m62 20h24m240-17h18m-84 19h22" stroke="var(--game-accent)" stroke-width="2" opacity=".45"/>
                 </g>
-                <path d="M0 232h480v88H0z" fill="var(--game-ground)"/>
-                <g fill="var(--game-accent)">
-                  <rect x="34" y="245" width="26" height="22"/><rect x="40" y="233" width="14" height="12"/>
-                  <rect x="72" y="252" width="34" height="15"/><rect x="82" y="238" width="14" height="14"/>
-                  <rect x="366" y="247" width="28" height="20"/><rect x="374" y="235" width="12" height="12"/>
-                  <rect x="410" y="251" width="35" height="16"/><rect x="421" y="237" width="13" height="14"/>
-                </g>
-                <g fill="var(--game-glow)">
-                  <rect x="43" y="251" width="4" height="5"/><rect x="53" y="251" width="4" height="5"/>
-                  <rect x="82" y="257" width="4" height="5"/><rect x="92" y="257" width="4" height="5"/>
-                  <rect x="375" y="253" width="4" height="5"/><rect x="385" y="253" width="4" height="5"/>
-                  <rect x="422" y="257" width="4" height="5"/><rect x="433" y="257" width="4" height="5"/>
-                </g>
-                <path d="M0 284h480M0 300h480" stroke="var(--game-accent)" stroke-width="2" opacity=".55"/>
+                <g id="game-actors" aria-hidden="true"></g>
               </svg>
-              <div class="game-title"><strong>RBLAB 98</strong><small>COLOR MODE SELECT</small></div>
-              <div class="screen-caption"><span>PC-98 STYLE</span><span>3 COLOR MODES</span></div>
+              <div class="game-hud" id="game-hud" hidden>
+                <span id="game-score">STARS 0 / 10</span>
+                <span>← / → MOVE</span>
+                <button class="game-exit" id="game-exit" type="button" aria-label="ゲームを終了">END</button>
+              </div>
+              <div class="game-overlay" id="game-overlay">
+                <strong id="game-overlay-title">STAR HUNT</strong>
+                <p id="game-overlay-copy">CATCH 10 STARS</p>
+                <button class="game-button" id="game-start" type="button" aria-label="ゲーム開始">START</button>
+              </div>
+              <div class="game-feedback" id="game-feedback" aria-hidden="true"></div>
+              <div class="screen-caption"><span>PC-98 STYLE</span><span>STAR HUNT</span></div>
             </div>
+            <div class="game-controls">
+              <div class="dpad" role="group" aria-label="横移動">
+                <button class="dpad-button dpad-left" type="button" data-direction="left" aria-label="左へ移動">◀</button>
+                <span class="dpad-label" aria-hidden="true">MOVE</span>
+                <button class="dpad-button dpad-right" type="button" data-direction="right" aria-label="右へ移動">▶</button>
+              </div>
+            </div>
+            <p class="sr-only" id="game-announcer" aria-live="polite" aria-atomic="true">ゲーム開始前です。スタートボタンを押してください。</p>
           </div>
         </div>
       </section>
@@ -473,6 +631,272 @@
   </div>
 
   <script>
+    (() => {
+      const region = document.querySelector(".scene-wrap");
+      const screen = document.getElementById("game-screen");
+      const world = document.getElementById("game-actors");
+      const landscape = document.getElementById("game-landscape");
+      const overlay = document.getElementById("game-overlay");
+      const overlayTitle = document.getElementById("game-overlay-title");
+      const overlayCopy = document.getElementById("game-overlay-copy");
+      const startButton = document.getElementById("game-start");
+      const hud = document.getElementById("game-hud");
+      const exitButton = document.getElementById("game-exit");
+      const feedback = document.getElementById("game-feedback");
+      const score = document.getElementById("game-score");
+      const announcer = document.getElementById("game-announcer");
+      const WORLD_WIDTH = 480;
+      const WORLD_HEIGHT = 320;
+      const WORLD_CENTER_X = WORLD_WIDTH / 2;
+      const MOVE_STEP = 24;
+      const directions = {
+        ArrowLeft: "left", a: "left", A: "left",
+        ArrowRight: "right", d: "right", D: "right"
+      };
+      const state = { mode: "idle", count: 0, x: WORLD_CENTER_X, y: 276, starX: WORLD_CENTER_X, starY: 24, starSpeed: 2.2, lastStarX: null };
+      let heldDirection = null;
+      let moveTimer = null;
+      let fallTimer = null;
+      let feedbackTimer = null;
+      const landscapeTiles = [-1, 0, 1].map((tile) => {
+        if (tile === 0) return landscape;
+        const copy = landscape.cloneNode(true);
+        copy.removeAttribute("id");
+        landscape.parentNode.insertBefore(copy, landscape.nextSibling);
+        return copy;
+      });
+
+      function visibleWorldWidth() {
+        const aspectRatio = screen.clientWidth / screen.clientHeight;
+        return Math.min(WORLD_WIDTH, WORLD_HEIGHT * aspectRatio);
+      }
+
+      function svgElement(name, attributes) {
+        const element = document.createElementNS("http://www.w3.org/2000/svg", name);
+        Object.entries(attributes).forEach(([key, value]) => element.setAttribute(key, value));
+        return element;
+      }
+
+      function drawWorld() {
+        world.replaceChildren();
+        const landscapeOffset = ((state.x - WORLD_CENTER_X) * 0.35 % WORLD_WIDTH + WORLD_WIDTH) % WORLD_WIDTH;
+        landscapeTiles.forEach((tile, index) => {
+          tile.setAttribute("transform", `translate(${(index - 1) * WORLD_WIDTH - landscapeOffset} 0)`);
+        });
+        if (state.mode !== "idle" && state.count < 10) {
+          const star = svgElement("path", {
+            d: "M0 -3.2L1 -1L3.2 0L1 1L0 3.2L-1 1L-3.2 0L-1 -1Z",
+            transform: `translate(${state.starX} ${state.starY})`,
+            fill: "var(--game-glow)",
+            stroke: "var(--game-star)",
+            "stroke-width": "1"
+          });
+          world.append(star);
+        }
+
+        if (state.mode !== "idle") {
+          const player = svgElement("g", { transform: `translate(${state.x} ${state.y})`, fill: "var(--game-accent)" });
+          player.append(
+            svgElement("rect", { x: "-12", y: "-17", width: "24", height: "11" }),
+            svgElement("rect", { x: "-6", y: "-20", width: "12", height: "3" }),
+            svgElement("rect", { x: "-12", y: "-6", width: "8", height: "5" }),
+            svgElement("rect", { x: "4", y: "-6", width: "8", height: "5" }),
+            svgElement("rect", { x: "-6", y: "-14", width: "2", height: "2", fill: "var(--game-glow)" }),
+            svgElement("rect", { x: "4", y: "-14", width: "2", height: "2", fill: "var(--game-glow)" })
+          );
+          world.append(player);
+        }
+      }
+
+      function announceScore(message = `星を${state.count}個集めました。あと${10 - state.count}個です。`) {
+        score.textContent = `STAR ${state.count} / 10 · LEFT ${10 - state.count}`;
+        announcer.textContent = message;
+      }
+
+      function showGameFeedback(type, label) {
+        window.clearTimeout(feedbackTimer);
+        screen.classList.remove("is-catching", "is-missing");
+        feedback.classList.remove("is-visible", "is-miss");
+        void feedback.offsetWidth;
+        feedback.textContent = label;
+        feedback.classList.add("is-visible");
+        screen.classList.add(type === "catch" ? "is-catching" : "is-missing");
+        if (type === "miss") feedback.classList.add("is-miss");
+        feedbackTimer = window.setTimeout(() => {
+          screen.classList.remove("is-catching", "is-missing");
+          feedback.classList.remove("is-visible", "is-miss");
+        }, 700);
+      }
+
+      function startGame() {
+        stopMoving();
+        if (fallTimer !== null) window.clearInterval(fallTimer);
+        state.mode = "playing";
+        state.count = 0;
+        state.x = WORLD_CENTER_X;
+        state.y = 276;
+        spawnStar();
+        startButton.setAttribute("aria-label", "ゲーム開始");
+        overlay.hidden = true;
+        hud.hidden = false;
+        announceScore();
+        drawWorld();
+        fallTimer = window.setInterval(dropStar, 45);
+        screen.focus();
+      }
+
+      function endGame() {
+        if (state.mode !== "playing") return;
+        stopMoving();
+        window.clearTimeout(feedbackTimer);
+        screen.classList.remove("is-catching", "is-missing");
+        feedback.classList.remove("is-visible", "is-miss");
+        if (fallTimer !== null) window.clearInterval(fallTimer);
+        fallTimer = null;
+        state.mode = "idle";
+        hud.hidden = true;
+        overlayTitle.textContent = "GAME ENDED";
+        overlayCopy.textContent = `${state.count} STARS COLLECTED`;
+        startButton.textContent = "PLAY AGAIN";
+        startButton.setAttribute("aria-label", "もう一度遊ぶ");
+        overlay.hidden = false;
+        announcer.textContent = `ゲームを終了しました。星を${state.count}個集めました。もう一度遊ぶボタンで再挑戦できます。`;
+        drawWorld();
+        startButton.focus();
+      }
+
+      function move(direction) {
+        if (state.mode !== "playing") return;
+        const lanes = playerLanes();
+        const currentLane = nearestLane(state.x, lanes);
+        const currentIndex = lanes.indexOf(currentLane);
+        if (direction === "left") state.x = lanes[Math.max(0, currentIndex - 1)];
+        if (direction === "right") state.x = lanes[Math.min(lanes.length - 1, currentIndex + 1)];
+        drawWorld();
+      }
+
+      function playerBounds() {
+        const halfWidth = visibleWorldWidth() / 2 - 20;
+        return { min: WORLD_CENTER_X - halfWidth, max: WORLD_CENTER_X + halfWidth };
+      }
+
+      function playerLanes() {
+        const { min, max } = playerBounds();
+        const firstStep = Math.ceil((min - WORLD_CENTER_X) / MOVE_STEP);
+        const lastStep = Math.floor((max - WORLD_CENTER_X) / MOVE_STEP);
+        return Array.from({ length: lastStep - firstStep + 1 }, (_, index) => WORLD_CENTER_X + (firstStep + index) * MOVE_STEP);
+      }
+
+      function nearestLane(position, lanes) {
+        return lanes.reduce((nearest, lane) => Math.abs(lane - position) < Math.abs(nearest - position) ? lane : nearest, lanes[0] ?? WORLD_CENTER_X);
+      }
+
+      function spawnStar() {
+        const lanes = playerLanes();
+        const alternatives = lanes.filter((lane) => lane !== state.lastStarX);
+        const choices = alternatives.length > 0 ? alternatives : lanes;
+        state.starX = choices[Math.floor(Math.random() * choices.length)] ?? state.x;
+        state.lastStarX = state.starX;
+        state.starY = 24;
+        state.starSpeed = 3.5 + Math.random() * 1.5;
+      }
+
+      function dropStar() {
+        if (state.mode !== "playing") return;
+        state.starY += state.starSpeed;
+        const overlapsPlayerVertically = state.starY >= state.y - 23 && state.starY <= state.y + 7;
+        const overlapsPlayerHorizontally = Math.abs(state.x - state.starX) <= 15;
+        if (overlapsPlayerVertically && overlapsPlayerHorizontally) {
+          state.count += 1;
+          showGameFeedback("catch", "+1");
+          if (state.count === 10) {
+            state.mode = "won";
+            stopMoving();
+            window.clearInterval(fallTimer);
+            fallTimer = null;
+            hud.hidden = true;
+            overlayTitle.textContent = "STAGE CLEAR";
+            overlayCopy.textContent = "10 STARS COLLECTED";
+            startButton.textContent = "PLAY AGAIN";
+            startButton.setAttribute("aria-label", "もう一度遊ぶ");
+            overlay.hidden = false;
+            announcer.textContent = "クリア！星を10個集めました。もう一度ボタンで再挑戦できます。";
+          } else {
+            spawnStar();
+            announceScore();
+          }
+        } else if (state.starY > WORLD_HEIGHT + 8) {
+          const lostStar = state.count > 0;
+          state.count = Math.max(0, state.count - 1);
+          showGameFeedback("miss", lostStar ? "MISS −1" : "MISS");
+          announceScore(lostStar
+            ? `星を取り逃しました。獲得数が1減り、現在${state.count}個です。`
+            : "星を取り逃しました。獲得数は0個です。");
+          spawnStar();
+        }
+        drawWorld();
+      }
+
+      function stopMoving() {
+        heldDirection = null;
+        if (moveTimer !== null) window.clearInterval(moveTimer);
+        moveTimer = null;
+      }
+
+      function holdDirection(direction) {
+        if (state.mode !== "playing" || heldDirection === direction) return;
+        stopMoving();
+        heldDirection = direction;
+        move(direction);
+        moveTimer = window.setInterval(() => move(direction), 115);
+      }
+
+      startButton.addEventListener("click", startGame);
+      exitButton.addEventListener("click", endGame);
+
+      document.addEventListener("keydown", (event) => {
+        if (state.mode !== "playing" || !region.contains(document.activeElement)) return;
+        if (event.key === "Escape") {
+          event.preventDefault();
+          endGame();
+          return;
+        }
+        const direction = directions[event.key];
+        if (!direction) return;
+        event.preventDefault();
+        if (!event.repeat) holdDirection(direction);
+      });
+
+      document.addEventListener("keyup", (event) => {
+        if (directions[event.key]) stopMoving();
+      });
+
+      window.addEventListener("blur", stopMoving);
+      window.addEventListener("resize", () => {
+        if (state.mode !== "playing") return;
+        const bounds = playerBounds();
+        const lanes = playerLanes();
+        state.x = nearestLane(Math.max(bounds.min, Math.min(bounds.max, state.x)), lanes);
+        state.starX = nearestLane(Math.max(bounds.min, Math.min(bounds.max, state.starX)), lanes);
+        drawWorld();
+      });
+
+      document.querySelectorAll("[data-direction]").forEach((button) => {
+        const direction = button.dataset.direction;
+        button.addEventListener("pointerdown", (event) => {
+          event.preventDefault();
+          button.setPointerCapture(event.pointerId);
+          holdDirection(direction);
+        });
+        button.addEventListener("pointerup", stopMoving);
+        button.addEventListener("pointercancel", stopMoving);
+        button.addEventListener("lostpointercapture", stopMoving);
+        button.addEventListener("contextmenu", (event) => event.preventDefault());
+      });
+
+      drawWorld();
+    })();
+
     (() => {
       const root = document.documentElement;
       const buttons = Array.from(document.querySelectorAll("[data-theme-choice]"));
