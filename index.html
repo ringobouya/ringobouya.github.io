@@ -20,6 +20,7 @@
       --accent-ink: #fffaf0;
       --game-sky: #142042;
       --game-glow: #ffdb75;
+      --game-moon: #a99a66;
       --game-mountain: #484a76;
       --game-ground: #252b4b;
       --game-accent: #f18a75;
@@ -42,6 +43,7 @@
       --accent-ink: #17201c;
       --game-sky: #071d1b;
       --game-glow: #c6e879;
+      --game-moon: #65855a;
       --game-mountain: #185047;
       --game-ground: #0d302b;
       --game-accent: #59c9a2;
@@ -61,6 +63,7 @@
       --accent-ink: #fff8f5;
       --game-sky: #40325f;
       --game-glow: #ffdf8d;
+      --game-moon: #aa789d;
       --game-mountain: #9c5488;
       --game-ground: #58376e;
       --game-accent: #96ddeb;
@@ -586,7 +589,7 @@
                   <rect x="272" y="38" width="3" height="3"/><rect x="424" y="43" width="4" height="4"/>
                   <rect x="395" y="113" width="3" height="3"/><rect x="61" y="127" width="3" height="3"/>
                 </g>
-                <g fill="var(--game-glow)">
+                <g fill="var(--game-moon)">
                   <rect x="345" y="62" width="36" height="8"/><rect x="337" y="70" width="52" height="8"/>
                   <rect x="329" y="78" width="68" height="36"/><rect x="337" y="114" width="52" height="8"/>
                   <rect x="345" y="122" width="36" height="8"/>
@@ -676,6 +679,7 @@
       const WORLD_CENTER_X = WORLD_WIDTH / 2;
       const MOVE_STEP = 24;
       const MAX_MISSES = 3;
+      const MAX_DIFFICULTY_LEVEL = 8;
       const directions = {
         ArrowLeft: "left", a: "left", A: "left",
         ArrowRight: "right", d: "right", D: "right"
@@ -827,9 +831,16 @@
         state.starX = choices[Math.floor(Math.random() * choices.length)] ?? state.x;
         state.lastStarX = state.starX;
         state.starY = 24;
-        state.starSpeed = 3.5 + Math.random() * 1.5;
-        const driftPattern = Math.floor(Math.random() * 3);
-        state.starDrift = driftPattern === 0 ? 0 : (driftPattern === 1 ? -1 : 1) * (0.3 + Math.random() * 0.4);
+        const progress = Math.min(state.count, MAX_DIFFICULTY_LEVEL) / MAX_DIFFICULTY_LEVEL;
+        const difficulty = progress < 0.34 ? 0 : (progress < 0.67 ? 0.5 : 1);
+        state.starSpeed = 3.5 + Math.random() * 1.5 + difficulty * 2.5;
+        const straightChance = 0.5 - difficulty * 0.2;
+        if (Math.random() < straightChance) {
+          state.starDrift = 0;
+        } else {
+          const driftDirection = Math.random() < 0.5 ? -1 : 1;
+          state.starDrift = driftDirection * (0.45 + Math.random() * (0.25 + difficulty * 0.25));
+        }
       }
 
       function dropStar() {
