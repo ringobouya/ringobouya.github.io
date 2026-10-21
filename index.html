@@ -275,7 +275,7 @@
     .game-backdrop { z-index: 0; }
 
     .game-screen.is-catching { animation: game-flash .25s steps(2, end); }
-    .game-screen.is-missing { animation: game-shake .22s steps(3, end); }
+    .game-screen.is-missing { animation: none; }
 
     .idle-twinkle { animation: idle-twinkle 1.8s steps(2, end) infinite; }
     .idle-twinkle:nth-child(2) { animation-delay: -.7s; }
@@ -292,19 +292,14 @@
       50% { filter: brightness(1.65); }
     }
 
-    @keyframes game-shake {
-      25% { transform: translateX(-3px); }
-      75% { transform: translateX(3px); }
-    }
-
     .game-feedback {
       position: absolute;
       z-index: 5;
-      bottom: 24%;
+      top: 76%;
       left: 50%;
       opacity: 0;
       color: var(--game-glow);
-      font: 900 .95rem ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font: 900 .95rem "Courier New", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       letter-spacing: .08em;
       pointer-events: none;
       text-shadow: 2px 2px 0 #17152b;
@@ -312,7 +307,9 @@
     }
 
     .game-feedback.is-visible { animation: feedback-rise .65s steps(4, end) forwards; }
-    .game-feedback.is-miss { color: var(--game-accent); }
+    .game-feedback.is-miss { color: var(--game-glow); }
+    .game-feedback.is-visible.is-miss { animation: miss-fade .8s ease-out forwards; }
+    .game-feedback.is-miss::before, .game-feedback.is-miss::after { opacity: .55; }
     .game-feedback::before, .game-feedback::after { position: absolute; top: 0; content: "✦"; }
     .game-feedback::before { right: calc(100% + 8px); }
     .game-feedback::after { left: calc(100% + 8px); }
@@ -321,6 +318,12 @@
       15% { opacity: 1; transform: translate(-50%, 0); }
       75% { opacity: 1; transform: translate(-50%, -12px); }
       100% { opacity: 0; transform: translate(-50%, -18px); }
+    }
+
+    @keyframes miss-fade {
+      15% { opacity: .85; transform: translate(-50%, 2px); }
+      72% { opacity: .85; transform: translate(-50%, 0); }
+      100% { opacity: 0; transform: translate(-50%, -3px); }
     }
 
     .game-overlay {
@@ -407,7 +410,7 @@
     .game-hud {
       position: absolute;
       z-index: 4;
-      top: 9px;
+      top: 4px;
       right: 9px;
       left: 66px;
       display: flex;
@@ -453,7 +456,7 @@
     .game-hud-audio {
       position: absolute;
       z-index: 7;
-      top: 9px;
+      top: 4px;
       left: 9px;
       min-height: 25px;
       border: 0;
@@ -491,8 +494,10 @@
     .game-audio-note { font-weight: 500; opacity: .9; }
 
     .dpad {
-      display: flex;
+      display: grid;
+      grid-template-columns: 52px 60px 52px;
       align-items: center;
+      justify-content: center;
       gap: 8px;
     }
 
@@ -501,9 +506,12 @@
     .dpad-button:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 rgba(0, 0, 0, .45); }
 
     .dpad-label {
+      display: flex;
+      justify-content: center;
       color: var(--ink);
       font: 900 .62rem "Courier New", ui-monospace, monospace;
       letter-spacing: .1em;
+      text-align: center;
     }
 
     .sr-only {
@@ -666,7 +674,7 @@
       .idle-meteor { animation-duration: 1.8s !important; animation-iteration-count: infinite !important; }
       .idle-player { animation-duration: .72s !important; animation-iteration-count: infinite !important; }
       .game-screen.is-catching { animation: none !important; box-shadow: inset 0 0 0 3px var(--game-glow); }
-      .game-screen.is-missing { animation: none !important; box-shadow: inset 0 0 0 3px var(--game-accent); }
+      .game-screen.is-missing { animation: none !important; box-shadow: inset 0 0 0 3px var(--game-glow); }
       .game-feedback.is-visible { animation: none !important; opacity: 1; transform: translate(-50%, -8px); }
     }
   </style>
@@ -830,8 +838,19 @@
       });
 
       function visibleWorldWidth() {
+        return visibleWorldBounds().width;
+      }
+
+      function visibleWorldBounds() {
         const aspectRatio = screen.clientWidth / screen.clientHeight;
-        return Math.min(WORLD_WIDTH, WORLD_HEIGHT * aspectRatio);
+        const width = Math.min(WORLD_WIDTH, WORLD_HEIGHT * aspectRatio);
+        const height = Math.min(WORLD_HEIGHT, WORLD_WIDTH / aspectRatio);
+        return {
+          left: (WORLD_WIDTH - width) / 2,
+          top: (WORLD_HEIGHT - height) / 2,
+          width,
+          height
+        };
       }
 
       function svgElement(name, attributes) {
@@ -1171,6 +1190,14 @@
         screen.classList.remove("is-catching", "is-missing");
         feedback.classList.remove("is-visible", "is-miss");
         void feedback.offsetWidth;
+        const feedbackX = type === "catch" ? state.x : state.starX;
+        const feedbackY = type === "catch" ? state.y - 36 : WORLD_HEIGHT - 52;
+        const bounds = visibleWorldBounds();
+        const sideMargin = type === "catch" ? 24 : 48;
+        const boundedX = Math.min(bounds.left + bounds.width - sideMargin, Math.max(bounds.left + sideMargin, feedbackX));
+        const boundedY = Math.min(bounds.top + bounds.height - 28, Math.max(bounds.top + 20, feedbackY));
+        feedback.style.left = `${((boundedX - bounds.left) / bounds.width) * 100}%`;
+        feedback.style.top = `${((boundedY - bounds.top) / bounds.height) * 100}%`;
         feedback.textContent = label;
         feedback.classList.add("is-visible");
         screen.classList.add(type === "catch" ? "is-catching" : "is-missing");
