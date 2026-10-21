@@ -730,7 +730,7 @@
                 <span id="game-misses">MISS 0 / 3</span>
                 <button class="game-exit" id="game-exit" type="button" aria-label="Escapeキーまたはこのボタンでゲームを中止して結果を表示">ESC QUIT</button>
               </div>
-              <button class="game-hud-audio" id="game-hud-audio" type="button" aria-label="ゲーム音の状態: 待機中。クリックで再生">♪ READY</button>
+              <button class="game-hud-audio" id="game-hud-audio" type="button" aria-label="ゲーム音はオフです。クリックで再生">♪ OFF</button>
               <div class="game-overlay" id="game-overlay">
                 <strong id="game-overlay-title">METEOR CATCHER</strong>
                 <p id="game-overlay-copy">CATCH 10 STARS</p>
@@ -748,7 +748,7 @@
               </div>
             </div>
             <div class="game-audio-info">
-              <p class="game-audio-status" id="game-audio-status" aria-live="polite">AUDIO: READY · CLICK ♪ OR START</p>
+              <p class="game-audio-status" id="game-audio-status" aria-live="polite">AUDIO: MUTED</p>
               <p class="game-audio-note">CHECK VOLUME BEFORE PLAY</p>
             </div>
             <p class="sr-only" id="game-announcer" aria-live="polite" aria-atomic="true">ゲーム開始前です。スタートボタンを押してください。</p>
@@ -808,7 +808,7 @@
       const MOVE_STEP = 24;
       const MAX_MISSES = 3;
       const MAX_DIFFICULTY_LEVEL = 8;
-      const audioState = { context: null, musicGain: null, sfxGain: null, timer: null, step: 0, muted: false, track: null, activeTrack: null };
+      const audioState = { context: null, musicGain: null, sfxGain: null, timer: null, step: 0, muted: true, track: null, activeTrack: null };
       const melody = [523.25, 659.25, 783.99, 659.25, 587.33, 659.25, 880, 659.25, 523.25, 659.25, 783.99, 987.77, 880, 783.99, 659.25, 587.33];
       const bassline = [130.81, 130.81, 196, 196, 110, 110, 164.81, 164.81, 87.31, 87.31, 130.81, 130.81, 98, 98, 146.83, 146.83];
       const musicTracks = {
@@ -1096,21 +1096,16 @@
       }
 
       function toggleMusic() {
-        if (!audioState.muted && !audioState.context) {
-          startMusic("title");
+        if (audioState.muted) {
+          audioState.muted = false;
+          startMusic(audioState.track || "title");
           playSoundEffect("button");
+          updateAudioDisplay();
           return;
         }
-        audioState.muted = !audioState.muted;
-        if (audioState.muted) {
-          stopMusic();
-          setSfxGain(0);
-        } else if (audioState.track) {
-          startMusic(audioState.track);
-          playSoundEffect("button");
-        } else {
-          playSoundEffect("button");
-        }
+        audioState.muted = true;
+        stopMusic();
+        setSfxGain(0);
         updateAudioDisplay();
       }
 
