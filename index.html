@@ -192,6 +192,24 @@
       box-shadow: var(--shadow);
     }
 
+    body.game-expanded { overflow: hidden; }
+
+    .window.is-expanded {
+      position: fixed;
+      z-index: 1000;
+      inset: 0;
+      display: grid;
+      width: 100%;
+      height: 100vh;
+      height: 100dvh;
+      grid-template-rows: auto minmax(0, 1fr) auto auto;
+      overflow: hidden;
+      border: 0;
+      padding: max(6px, env(safe-area-inset-top)) max(8px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+      background: var(--paper-deep);
+      box-shadow: none;
+    }
+
     .window-bar {
       display: flex;
       align-items: center;
@@ -202,9 +220,38 @@
 
     .window-label { font-size: .65rem; font-weight: 700; }
 
-    .window-controls { display: flex; gap: 5px; }
+    .window-controls { display: flex; align-items: center; }
 
-    .window-controls i { display: block; width: 8px; height: 8px; border: 1px solid var(--line); background: var(--panel); }
+    .window-control-toggle {
+      display: grid;
+      width: 40px;
+      height: 40px;
+      flex: 0 0 40px;
+      margin: -12px -8px -12px 0;
+      padding: 0;
+      place-items: center;
+      appearance: none;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      color: var(--line);
+      cursor: pointer;
+    }
+
+    .window-control-icon { width: 16px; height: 16px; overflow: visible; }
+    .window-control-icon path { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: square; stroke-linejoin: miter; }
+    .window-control-icon .restore-icon { display: none; }
+
+    .window-control-toggle[aria-pressed="true"] .maximize-icon { display: none; }
+    .window-control-toggle[aria-pressed="true"] .restore-icon { display: block; }
+
+    .window-control-toggle:hover,
+    .window-control-toggle:focus-visible { color: var(--accent); }
+
+    .window-control-toggle:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 1px;
+    }
 
     .screen {
       position: relative;
@@ -397,6 +444,8 @@
 
     .game-button, .dpad-button {
       border: 1px solid var(--game-star);
+      border-radius: 0;
+      appearance: none;
       background: var(--game-ground);
       color: var(--game-star);
       cursor: pointer;
@@ -469,7 +518,7 @@
       transition: transform .08s steps(2, end), background-color .12s steps(2, end), color .12s steps(2, end);
     }
 
-    .game-exit:hover, .game-exit:focus-visible { color: var(--game-star); text-decoration: underline; text-underline-offset: 3px; }
+    .game-exit:hover, .game-exit:focus-visible { color: var(--game-star); text-decoration: none; }
     .game-exit:focus-visible { outline: 2px solid var(--game-star); outline-offset: 3px; }
     .game-exit:active { transform: translateY(1px); }
 
@@ -504,6 +553,21 @@
 
     .game-audio-info { display: grid; gap: 2px; margin-top: 3px; text-align: center; }
 
+    .window.is-expanded .window-bar { min-height: 36px; padding-bottom: 5px; }
+    .window.is-expanded .window-control-toggle { width: 44px; height: 44px; margin: -10px -8px -10px 0; }
+    .window.is-expanded .screen {
+      width: min(100%, max(0px, calc(150dvh - 270px)));
+      height: auto;
+      min-height: 0;
+      aspect-ratio: 3 / 2;
+      justify-self: center;
+      align-self: center;
+    }
+    .window.is-expanded .game-controls { padding: 8px 3px 3px; }
+    .window.is-expanded .dpad { grid-template-columns: 72px 76px 72px; gap: 14px; }
+    .window.is-expanded .dpad-button { width: 72px; height: 54px; min-width: 72px; min-height: 54px; font-size: 1.25rem; }
+    .window.is-expanded .game-audio-info { margin: 3px 0 2px; }
+
     .game-audio-status, .game-audio-note {
       margin: 0;
       color: var(--muted);
@@ -521,7 +585,19 @@
       gap: 8px;
     }
 
-    .dpad-button { min-width: 52px; min-height: 42px; border-width: 2px; font-size: 1rem; touch-action: none; }
+    .dpad-button {
+      width: 52px;
+      height: 42px;
+      min-width: 52px;
+      min-height: 42px;
+      flex: 0 0 auto;
+      padding: 0;
+      appearance: none;
+      border-width: 2px;
+      border-radius: 0;
+      font-size: 1rem;
+      touch-action: none;
+    }
 
     .dpad-button:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 rgba(0, 0, 0, .45); }
 
@@ -718,7 +794,14 @@
           <div class="window">
             <div class="window-bar">
               <span class="window-label">RBLAB 98 / METEOR CATCHER</span>
-              <span class="window-controls" aria-hidden="true"><i></i><i></i><i></i></span>
+              <span class="window-controls">
+                <button class="window-control-toggle" id="game-view-toggle" type="button" aria-label="ゲームを全画面表示" aria-pressed="false" title="ゲームを全画面表示">
+                  <svg class="window-control-icon" viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+                    <path class="maximize-icon" d="M7 3H3v4M13 3h4v4M17 13v4h-4M7 17H3v-4" />
+                    <path class="restore-icon" d="M7 6h10v11H7zM4 14V3h10" />
+                  </svg>
+                </button>
+              </span>
             </div>
             <div class="screen game-screen" id="game-screen" role="group" tabindex="0" aria-label="星あつめゲーム。左右の矢印キーまたはA、Dキーで移動します。">
               <svg class="pixel-world game-backdrop" viewBox="0 0 480 320" preserveAspectRatio="xMidYMid slice" focusable="false" aria-hidden="true">
@@ -812,6 +895,8 @@
     (() => {
       const region = document.querySelector(".scene-wrap");
       const screen = document.getElementById("game-screen");
+      const gameWindow = screen.closest(".window");
+      const gameViewToggle = document.getElementById("game-view-toggle");
       const world = document.getElementById("game-actors");
       const landscape = document.getElementById("game-landscape");
       const overlay = document.getElementById("game-overlay");
@@ -1289,6 +1374,7 @@
 
       function endGame() {
         if (state.mode !== "playing") return;
+        setExpandedView(false);
         playSoundEffect("end");
         stopMoving();
         window.clearTimeout(feedbackTimer);
@@ -1375,6 +1461,7 @@
           showGameFeedback("catch", "+1");
           if (state.count === 10) {
             state.mode = "won";
+            setExpandedView(false);
             stopMoving();
             window.clearInterval(fallTimer);
             fallTimer = null;
@@ -1397,6 +1484,7 @@
           showGameFeedback("miss", lostStar ? "MISS −1" : "MISS");
           if (state.misses >= MAX_MISSES) {
             state.mode = "over";
+            setExpandedView(false);
             playSoundEffect("over");
             stopMoving();
             window.clearInterval(fallTimer);
@@ -1425,6 +1513,15 @@
         moveTimer = null;
       }
 
+      function setExpandedView(expanded) {
+        gameWindow.classList.toggle("is-expanded", expanded);
+        document.body.classList.toggle("game-expanded", expanded);
+        gameViewToggle.setAttribute("aria-pressed", String(expanded));
+        gameViewToggle.setAttribute("aria-label", expanded ? "ゲームを通常表示に戻す" : "ゲームを全画面表示");
+        gameViewToggle.title = expanded ? "ゲームを通常表示に戻す" : "ゲームを全画面表示";
+        window.requestAnimationFrame(drawWorld);
+      }
+
       function holdDirection(direction) {
         if (state.mode !== "playing" || heldDirection === direction) return;
         stopMoving();
@@ -1436,12 +1533,22 @@
       startButton.addEventListener("click", startGame);
       exitButton.addEventListener("click", endGame);
       hudAudioToggle.addEventListener("click", toggleMusic);
+      gameViewToggle.addEventListener("click", () => {
+        setExpandedView(!gameWindow.classList.contains("is-expanded"));
+        gameViewToggle.focus();
+      });
       secretMessageClose.addEventListener("click", () => {
         secretMessage.hidden = true;
         startButton.focus();
       });
 
       document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && gameWindow.classList.contains("is-expanded")) {
+          event.preventDefault();
+          setExpandedView(false);
+          gameViewToggle.focus();
+          return;
+        }
         const targetTag = event.target && event.target.tagName;
         const isTyping = targetTag === "INPUT" || targetTag === "TEXTAREA" || event.target.isContentEditable;
         if (!isTyping && state.mode === "idle" && !secretMessage.hidden) {
@@ -1487,7 +1594,10 @@
 
       window.addEventListener("blur", stopMoving);
       window.addEventListener("resize", () => {
-        if (state.mode !== "playing") return;
+        if (state.mode !== "playing") {
+          drawWorld();
+          return;
+        }
         const bounds = playerBounds();
         const lanes = playerLanes();
         state.x = nearestLane(Math.max(bounds.min, Math.min(bounds.max, state.x)), lanes);
