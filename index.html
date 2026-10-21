@@ -343,6 +343,26 @@
 
     .game-overlay[hidden] { display: none; }
 
+    .secret-message {
+      position: absolute;
+      z-index: 5;
+      inset: 0;
+      display: grid;
+      align-content: center;
+      justify-items: center;
+      gap: 9px;
+      padding: 20px;
+      background: rgba(7, 15, 28, .94);
+      color: var(--game-star);
+      text-align: center;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    .secret-message[hidden] { display: none; }
+    .secret-message strong { color: var(--game-glow); font-size: .8rem; letter-spacing: .12em; }
+    .secret-message p { margin: 0; font-size: .72rem; }
+    .secret-message button { margin-top: 5px; border: 1px solid var(--game-star); padding: 4px 12px; background: transparent; color: inherit; cursor: pointer; font: inherit; font-size: .65rem; }
+
     .game-countdown {
       position: absolute;
       z-index: 6;
@@ -736,6 +756,11 @@
                 <p id="game-overlay-copy">CATCH 10 STARS</p>
                 <button class="game-button" id="game-start" type="button" aria-label="ゲーム開始">START</button>
               </div>
+              <div class="secret-message" id="secret-message" role="dialog" aria-modal="true" aria-labelledby="secret-message-title" hidden>
+                <strong id="secret-message-title">SECRET TRANSMISSION</strong>
+                <p>このゲームは GPT-6軽 と一緒につくりました。</p>
+                <button id="secret-message-close" type="button">CLOSE</button>
+              </div>
               <div class="game-countdown" id="game-countdown" role="status" aria-live="assertive" aria-atomic="true" hidden></div>
               <div class="game-feedback" id="game-feedback" aria-hidden="true"></div>
               <div class="screen-caption"><span>METEOR CATCHER</span></div>
@@ -792,6 +817,8 @@
       const overlay = document.getElementById("game-overlay");
       const overlayTitle = document.getElementById("game-overlay-title");
       const overlayCopy = document.getElementById("game-overlay-copy");
+      const secretMessage = document.getElementById("secret-message");
+      const secretMessageClose = document.getElementById("secret-message-close");
       const countdown = document.getElementById("game-countdown");
       const startButton = document.getElementById("game-start");
       const hud = document.getElementById("game-hud");
@@ -823,6 +850,8 @@
         ArrowLeft: "left", a: "left", A: "left",
         ArrowRight: "right", d: "right", D: "right"
       };
+      const secretSequence = ["ArrowUp", "ArrowUp", "ArrowDown", "ArrowDown", "ArrowLeft", "ArrowRight", "ArrowLeft", "ArrowRight"];
+      let secretSequenceIndex = 0;
       const state = { mode: "idle", count: 0, misses: 0, x: WORLD_CENTER_X, y: 276, starX: WORLD_CENTER_X, starY: 24, starSpeed: 2.2, starDrift: 0, lastStarX: null };
       let heldDirection = null;
       let moveTimer = null;
@@ -1407,8 +1436,33 @@
       startButton.addEventListener("click", startGame);
       exitButton.addEventListener("click", endGame);
       hudAudioToggle.addEventListener("click", toggleMusic);
+      secretMessageClose.addEventListener("click", () => {
+        secretMessage.hidden = true;
+        startButton.focus();
+      });
 
       document.addEventListener("keydown", (event) => {
+        const targetTag = event.target && event.target.tagName;
+        const isTyping = targetTag === "INPUT" || targetTag === "TEXTAREA" || event.target.isContentEditable;
+        if (!isTyping && state.mode === "idle" && !secretMessage.hidden) {
+          if (event.key === "Escape") secretMessageClose.click();
+          return;
+        }
+        if (!isTyping && state.mode === "idle") {
+          const expectedKey = secretSequence[secretSequenceIndex];
+          if (event.key.toLowerCase() === expectedKey.toLowerCase()) {
+            secretSequenceIndex += 1;
+            if (secretSequenceIndex === secretSequence.length) {
+              secretSequenceIndex = 0;
+              secretMessage.hidden = false;
+              secretMessageClose.focus();
+              event.preventDefault();
+              return;
+            }
+          } else {
+            secretSequenceIndex = event.key.toLowerCase() === "arrowup" ? 1 : 0;
+          }
+        }
         if (!region.contains(document.activeElement)) return;
         if (state.mode === "countdown" && event.key === "Escape") {
           event.preventDefault();
