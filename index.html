@@ -434,17 +434,20 @@
     .game-exit {
       min-width: 42px;
       min-height: 25px;
-      border: 1px solid var(--game-accent);
-      padding: 1px 7px;
-      background: var(--game-ground);
-      color: var(--game-star);
+      border: 0;
+      padding: 1px 5px;
+      background: transparent;
+      color: var(--game-glow);
       cursor: pointer;
       font: 900 .62rem "Courier New", ui-monospace, monospace;
       letter-spacing: .08em;
       text-shadow: 1px 1px 0 #17152b;
+      transition: transform .08s steps(2, end), background-color .12s steps(2, end), color .12s steps(2, end);
     }
 
-    .game-exit:hover { background: var(--game-accent); color: var(--game-ground); }
+    .game-exit:hover, .game-exit:focus-visible { color: var(--game-star); text-decoration: underline; text-underline-offset: 3px; }
+    .game-exit:focus-visible { outline: 2px solid var(--game-star); outline-offset: 3px; }
+    .game-exit:active { transform: translateY(1px); }
 
     .game-sound-toggle {
       min-width: 62px;
@@ -712,7 +715,7 @@
                 <span id="game-score">STARS 0 / 10</span>
                 <span id="game-misses">MISS 0 / 3</span>
                 <span>← / → MOVE</span>
-                <button class="game-exit" id="game-exit" type="button" aria-label="ゲームを終了">END</button>
+                <button class="game-exit" id="game-exit" type="button" aria-label="Escapeキーまたはこのボタンでゲームを中止して結果を表示">ESC QUIT</button>
               </div>
               <div class="game-overlay" id="game-overlay">
                 <strong id="game-overlay-title">METEOR CATCHER</strong>
@@ -1239,12 +1242,12 @@
         state.mode = "idle";
         startMusic("ending");
         hud.hidden = true;
-        overlayTitle.textContent = "GAME ENDED";
-        overlayCopy.textContent = `${state.count} STARS COLLECTED`;
-        startButton.textContent = "PLAY AGAIN";
+        overlayTitle.textContent = "GAME OVER";
+        overlayCopy.textContent = `${state.count} STARS · ${state.misses} MISSES`;
+        startButton.textContent = "TRY AGAIN";
         startButton.setAttribute("aria-label", "もう一度遊ぶ");
         overlay.hidden = false;
-        announcer.textContent = `ゲームを終了しました。星を${state.count}個集めました。もう一度遊ぶボタンで再挑戦できます。`;
+        announcer.textContent = `ゲームオーバー。星を${state.count}個集め、${state.misses}回取り逃しました。もう一度遊ぶボタンで再挑戦できます。`;
         drawWorld();
         startButton.focus();
       }
