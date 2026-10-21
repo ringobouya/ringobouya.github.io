@@ -409,12 +409,12 @@
       z-index: 4;
       top: 9px;
       right: 9px;
-      left: 86px;
+      left: 70px;
       display: flex;
       align-items: flex-start;
       justify-content: flex-start;
       flex-wrap: nowrap;
-      gap: 6px;
+      gap: 3px;
       color: var(--game-star);
       font: 900 .62rem "Courier New", ui-monospace, monospace;
       text-shadow: 2px 2px 0 #17152b;
@@ -423,8 +423,9 @@
     .game-hud span {
       min-height: 25px;
       display: inline-flex;
+      flex: 0 0 auto;
       align-items: center;
-      padding: 0 7px;
+      padding: 0 4px;
       white-space: nowrap;
     }
 
@@ -433,6 +434,7 @@
     .game-exit {
       min-width: 42px;
       min-height: 25px;
+      flex: 0 0 auto;
       border: 0;
       padding: 1px 5px;
       background: transparent;
@@ -651,9 +653,10 @@
     }
 
     @media (max-width: 380px) {
-      .game-hud { gap: 4px; }
-      .game-hud span { min-height: 23px; padding: 0 5px; font-size: .56rem; }
-      .game-exit { min-width: 36px; min-height: 23px; padding: 0 5px; font-size: .56rem; }
+      .game-hud { left: 66px; gap: 2px; }
+      .game-hud span { min-height: 23px; padding: 0 3px; font-size: .52rem; }
+      .game-hud span:nth-of-type(3) { display: none; }
+      .game-exit { min-width: 0; min-height: 23px; padding: 0 5px; font-size: .56rem; }
       .game-overlay { padding-right: 10px; padding-left: 10px; }
       .game-overlay strong { font-size: clamp(.9rem, 5vw, 1.2rem); }
     }
