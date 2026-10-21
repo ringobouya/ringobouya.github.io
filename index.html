@@ -263,10 +263,11 @@
       bottom: 8px;
       left: 12px;
       display: flex;
-      justify-content: space-between;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      font-size: .62rem;
-      letter-spacing: .06em;
+      justify-content: flex-end;
+      color: var(--game-star);
+      font: 900 .66rem "Courier New", ui-monospace, monospace;
+      letter-spacing: .09em;
+      text-shadow: 2px 2px 0 #17152b;
     }
 
     .game-screen { isolation: isolate; }
@@ -329,14 +330,21 @@
     .game-overlay[hidden] { display: none; }
 
     .game-overlay strong {
-      font-family: "Arial Black", "Yu Gothic", sans-serif;
+      font-family: "Courier New", ui-monospace, monospace;
       font-size: clamp(1rem, 2.2vw, 1.45rem);
+      font-weight: 900;
       letter-spacing: .09em;
       line-height: 1.2;
       -webkit-text-stroke: 1px var(--game-accent);
     }
 
-    .game-overlay p { margin: 0; font-size: .7rem; }
+    .game-overlay p {
+      margin: 0;
+      color: var(--game-glow);
+      font: 900 .72rem "Courier New", ui-monospace, monospace;
+      letter-spacing: .12em;
+      text-shadow: 2px 2px 0 #17152b;
+    }
 
     .game-button, .dpad-button {
       border: 1px solid var(--game-star);
@@ -346,7 +354,27 @@
       box-shadow: 2px 2px 0 rgba(0, 0, 0, .45);
     }
 
-    .game-button { min-width: 96px; min-height: 40px; padding: 6px 16px; font-weight: 800; letter-spacing: .1em; }
+    .game-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 112px;
+      min-height: 42px;
+      padding: 6px 14px;
+      border: 2px solid var(--game-star);
+      font: 800 .72rem ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      letter-spacing: .15em;
+      text-shadow: none;
+      box-shadow: 3px 3px 0 var(--game-accent), 5px 5px 0 rgba(0, 0, 0, .38);
+      transition: transform .08s steps(2, end), box-shadow .08s steps(2, end), background-color .12s steps(2, end), color .12s steps(2, end);
+    }
+
+    .game-button::before { margin-right: 8px; color: var(--game-glow); content: "▶"; font-size: .62rem; }
+
+    .game-button:active {
+      transform: translate(3px, 3px);
+      box-shadow: 0 0 0 rgba(0, 0, 0, .38);
+    }
 
     .game-button:hover, .dpad-button:hover { background: var(--game-accent); color: var(--game-ground); }
 
@@ -360,8 +388,9 @@
       align-items: flex-start;
       justify-content: flex-start;
       gap: 6px;
-      font: 700 .62rem ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      text-shadow: 1px 1px 0 #17152b;
+      color: var(--game-star);
+      font: 900 .62rem "Courier New", ui-monospace, monospace;
+      text-shadow: 2px 2px 0 #17152b;
     }
 
     .game-hud span {
@@ -384,9 +413,9 @@
       background: var(--game-ground);
       color: var(--game-star);
       cursor: pointer;
-      font: inherit;
-      font-size: .62rem;
-      letter-spacing: .05em;
+      font: 900 .62rem "Courier New", ui-monospace, monospace;
+      letter-spacing: .08em;
+      text-shadow: 1px 1px 0 #17152b;
     }
 
     .game-exit:hover { background: var(--game-accent); color: var(--game-ground); }
@@ -412,9 +441,9 @@
     .dpad-button:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0 rgba(0, 0, 0, .45); }
 
     .dpad-label {
-      color: var(--muted);
-      font: 700 .58rem ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      letter-spacing: .12em;
+      color: var(--ink);
+      font: 900 .62rem "Courier New", ui-monospace, monospace;
+      letter-spacing: .1em;
     }
 
     .sr-only {
@@ -440,9 +469,14 @@
       border-bottom: 1px solid var(--line);
     }
 
-    .section-label { margin: 0; font-size: .7rem; color: var(--muted); }
+    .section-label { margin: 0; color: var(--muted); font-size: .62rem; }
 
-    .theme-heading { margin: 3px 0 0; font-size: 1.15rem; letter-spacing: -.03em; }
+    .theme-heading {
+      margin: 4px 0 0;
+      font: 800 1rem ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
 
     .theme-controls { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 9px; }
 
@@ -452,16 +486,18 @@
       gap: 9px;
       min-height: 43px;
       padding: 7px 13px;
-      border: 1px solid var(--line);
-      border-radius: var(--radius);
+      border: 2px solid var(--line);
+      border-radius: 0;
       background: var(--panel);
       color: var(--ink);
       cursor: pointer;
-      font-size: .82rem;
+      font: 700 .72rem ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      letter-spacing: .08em;
+      box-shadow: 2px 2px 0 var(--panel-shadow);
       transition: background-color .2s ease, color .2s ease, transform .2s ease;
     }
 
-    .theme-button:hover { transform: translateY(-2px); }
+    .theme-button:hover { transform: translate(-1px, -1px); }
 
     .theme-button[aria-pressed="true"] {
       border-color: var(--accent);
@@ -470,7 +506,7 @@
       box-shadow: 3px 3px 0 var(--panel-shadow);
     }
 
-    .swatch { width: 13px; height: 13px; border: 1px solid currentColor; border-radius: 50%; }
+    .swatch { width: 12px; height: 12px; border: 1px solid currentColor; border-radius: 0; image-rendering: pixelated; }
     [data-theme-choice="classic"] .swatch { background: #dce5d2; }
     [data-theme-choice="terminal"] .swatch { background: #17201c; }
     [data-theme-choice="candy"] .swatch { background: #f4c2d4; }
@@ -483,7 +519,14 @@
       padding: 22px 0 0;
     }
 
-    .note { max-width: 560px; margin: 0; color: var(--muted); font-size: .87rem; }
+    .note {
+      max-width: 560px;
+      margin: 0;
+      color: var(--muted);
+      font: 500 .62rem ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      letter-spacing: .035em;
+      text-transform: uppercase;
+    }
 
     .status {
       display: flex;
@@ -495,7 +538,7 @@
       white-space: nowrap;
     }
 
-    .status::before { width: 7px; height: 7px; border-radius: 50%; background: #698d55; content: ""; }
+    .status::before { width: 7px; height: 7px; background: #698d55; content: ""; }
 
     footer {
       display: flex;
@@ -551,8 +594,8 @@
 
     @media (max-width: 380px) {
       .game-hud { gap: 4px; }
-      .game-hud span { min-height: 23px; padding: 0 5px; font-size: .54rem; }
-      .game-exit { min-width: 36px; min-height: 23px; padding: 0 5px; font-size: .54rem; }
+      .game-hud span { min-height: 23px; padding: 0 5px; font-size: .56rem; }
+      .game-exit { min-width: 36px; min-height: 23px; padding: 0 5px; font-size: .56rem; }
       .game-overlay { padding-right: 10px; padding-left: 10px; }
       .game-overlay strong { font-size: clamp(.9rem, 5vw, 1.2rem); }
     }
@@ -623,7 +666,7 @@
                 <button class="game-button" id="game-start" type="button" aria-label="ゲーム開始">START</button>
               </div>
               <div class="game-feedback" id="game-feedback" aria-hidden="true"></div>
-              <div class="screen-caption"><span>PC-98 STYLE</span><span>METEOR CATCHER</span></div>
+              <div class="screen-caption"><span>METEOR CATCHER</span></div>
             </div>
             <div class="game-controls">
               <div class="dpad" role="group" aria-label="横移動">
@@ -639,19 +682,19 @@
 
       <section class="theme-section" aria-labelledby="theme-heading">
         <div>
-          <p class="section-label">表示設定</p>
-          <h2 class="theme-heading" id="theme-heading">*</h2>
+          <p class="section-label">SYSTEM CONFIGURATION</p>
+          <h2 class="theme-heading" id="theme-heading">COLOR MODE</h2>
         </div>
-        <div class="theme-controls" role="group" aria-label="テーマを選択">
-          <button class="theme-button" type="button" data-theme-choice="classic" aria-pressed="true"><span class="swatch" aria-hidden="true"></span>クラシック</button>
-          <button class="theme-button" type="button" data-theme-choice="terminal" aria-pressed="false"><span class="swatch" aria-hidden="true"></span>ターミナル</button>
-          <button class="theme-button" type="button" data-theme-choice="candy" aria-pressed="false"><span class="swatch" aria-hidden="true"></span>キャンディ</button>
+        <div class="theme-controls" role="group" aria-label="Choose a theme">
+          <button class="theme-button" type="button" data-theme-choice="classic" aria-pressed="true"><span class="swatch" aria-hidden="true"></span>CLASSIC</button>
+          <button class="theme-button" type="button" data-theme-choice="terminal" aria-pressed="false"><span class="swatch" aria-hidden="true"></span>TERMINAL</button>
+          <button class="theme-button" type="button" data-theme-choice="candy" aria-pressed="false"><span class="swatch" aria-hidden="true"></span>CANDY</button>
         </div>
       </section>
 
       <div class="below-grid">
-        <p class="note">選んだテーマは、このブラウザーに保存されます。</p>
-        <p class="status" id="theme-status" aria-live="polite">現在のテーマ：クラシック</p>
+        <p class="note">THEME SAVED IN THIS BROWSER.</p>
+        <p class="status" id="theme-status" aria-live="polite">MODE: CLASSIC</p>
       </div>
     </main>
 
@@ -973,9 +1016,9 @@
       const buttons = Array.from(document.querySelectorAll("[data-theme-choice]"));
       const status = document.getElementById("theme-status");
       const themeNames = {
-        classic: "クラシック",
-        terminal: "ターミナル",
-        candy: "キャンディ"
+        classic: "CLASSIC",
+        terminal: "TERMINAL",
+        candy: "CANDY"
       };
       const storageKey = "web-lab-theme";
 
@@ -985,7 +1028,7 @@
         buttons.forEach((button) => {
           button.setAttribute("aria-pressed", String(button.dataset.themeChoice === selectedTheme));
         });
-        status.textContent = `現在のテーマ：${themeNames[selectedTheme]}`;
+        status.textContent = `MODE: ${themeNames[selectedTheme]}`;
         document.querySelector('meta[name="theme-color"]').content = getComputedStyle(root).getPropertyValue("--paper").trim();
 
         if (persist) {
